@@ -1,0 +1,10 @@
+target/
+data/
+*.class
+*.war
+*.jar
+.idea/
+*.iml
+.settings/
+.classpath
+.project

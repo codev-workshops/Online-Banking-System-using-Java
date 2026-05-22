@@ -32,7 +32,7 @@
 		<HTML><HEAD></HEAD>
 		<BODY bgcolor='#F1F1FD'>
 		<h4 ALIGN='center'>Congratulations! You have an account with us. Thank you! You can login now.</h4>
-		<FORM NAME="LoginPage" ACTION="/OnlineLoginServlet" METHOD ="POST">
+		<FORM NAME="LoginPage" ACTION="/CSCI6810/OnlineLoginServlet" METHOD ="POST">
 		<TABLE cellPadding='3' ALIGN='center'>
 		<TR bgcolor='#ECFAEB'>
 		<TD>USERNAME:</TD>
