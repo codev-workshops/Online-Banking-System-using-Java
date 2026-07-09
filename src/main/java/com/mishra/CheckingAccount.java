@@ -13,6 +13,19 @@ public class CheckingAccount
 	private String CheckingAccountNumber, CustomerName, CustomerID;
 	private float Balance = -1, Amount = -1;
 
+	// Optional injected connection factory for testability. When null the
+	// original production behaviour (new DBConnection()) is preserved.
+	private DBConnection dbConnection;
+
+	// Package-private setter used by unit tests to inject a mocked DBConnection.
+	void setDBConnection(DBConnection db) {
+		this.dbConnection = db;
+	}
+
+	private DBConnection getDBConnection() {
+		return dbConnection != null ? dbConnection : new DBConnection();
+	}
+
 		public CheckingAccount(String CA_Num, String Cust_Name, String Cust_ID, String Amt) { //Constructor One with three parameters
 		CheckingAccountNumber = CA_Num;
 		CustomerName = Cust_Name;
@@ -34,7 +47,7 @@ public class CheckingAccount
 	     boolean done = false;
 				try {
 				    if (!done) {
-				        DBConnection ToDB = new DBConnection(); //Have a connection to the DB
+				        DBConnection ToDB = getDBConnection(); //Have a connection to the DB
 				        Connection DBConn = ToDB.openConn();
 				        Statement Stmt = DBConn.createStatement();
 				        String SQL_Command = "SELECT CheckingAccountNumber FROM CheckingAccount WHERE CheckingAccountNumber ='"+CheckingAccountNumber+"'"; //SQL query command
@@ -69,7 +82,7 @@ public class CheckingAccount
 	}
 	public String getAccno(String C_ID) {  //Method to return a CheckingAccount No.
 			try {
-			        DBConnection ToDB = new DBConnection(); //Have a connection to the DB
+			        DBConnection ToDB = getDBConnection(); //Have a connection to the DB
 			        Connection DBConn = ToDB.openConn();
 			        Statement Stmt = DBConn.createStatement();
 			        String SQL_Command = "SELECT CheckingAccountNumber FROM CheckingAccount WHERE CustomerID ='"+C_ID+"'";
@@ -97,7 +110,7 @@ public class CheckingAccount
 	}
     public float getBalance() {  //Method to return a CheckingAccount balance
 		try {
-		        DBConnection ToDB = new DBConnection(); //Have a connection to the DB
+		        DBConnection ToDB = getDBConnection(); //Have a connection to the DB
 		        Connection DBConn = ToDB.openConn();
 		        Statement Stmt = DBConn.createStatement();
 		        String SQL_Command = "SELECT Balance FROM CheckingAccount WHERE CheckingAccountNumber ='"+CheckingAccountNumber+"'"; //SQL query command for Balance
@@ -130,7 +143,7 @@ public class CheckingAccount
 
     public float getBalance(String ChkAcctNumber) {  //Method to return a CheckingAccount balance
 		try {
-		        DBConnection ToDB = new DBConnection(); //Have a connection to the DB
+		        DBConnection ToDB = getDBConnection(); //Have a connection to the DB
 		        Connection DBConn = ToDB.openConn();
 		        Statement Stmt = DBConn.createStatement();
 		        String SQL_Command = "SELECT Balance FROM CheckingAccount WHERE CheckingAccountNumber ='"+ChkAcctNumber+"'"; //SQL query command for Balance
@@ -167,7 +180,7 @@ public class CheckingAccount
 
 			try{
 				if(done){
-					DBConnection DBconn = new DBConnection();
+					DBConnection DBconn = getDBConnection();
 					Connection conn = DBconn.openConn();
 					Statement stat = conn.createStatement();
 					String SQL_Command = "SELECT Balance FROM CheckingAccount WHERE CheckingAccountNumber = '"+CheckingAccountNumber+"' AND CustomerID ='"+C_ID+"'";
@@ -210,7 +223,7 @@ public class CheckingAccount
 
 			try{
 				if(done){
-					DBConnection DBconn = new DBConnection();
+					DBConnection DBconn = getDBConnection();
 					Connection Conn = DBconn.openConn();
 					Statement Stat = Conn.createStatement();
 					String SQL_Command = "SELECT Balance FROM CheckingAccount WHERE CheckingAccountNumber = '"+CheckingAccountNumber+"' AND CustomerID= '"+C_ID+"' ";

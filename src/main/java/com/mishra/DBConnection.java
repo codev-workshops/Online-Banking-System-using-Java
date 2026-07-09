@@ -11,6 +11,7 @@ import java.sql.*;
 public class DBConnection {
 
     private Connection connection;
+    private Connection injectedConnection;
     private String URL;
 
     public DBConnection() {
@@ -20,7 +21,22 @@ public class DBConnection {
 
     }
 
+    // Testability hook: inject a pre-built connection (e.g. a mock) so that
+    // openConn() returns it instead of opening a real JDBC connection.
+    public DBConnection(Connection conn) {
+        this();
+        this.injectedConnection = conn;
+    }
+
+    public void setConnection(Connection conn) {
+        this.injectedConnection = conn;
+    }
+
     public Connection openConn() {
+        if (injectedConnection != null) {
+            connection = injectedConnection;
+            return connection;
+        }
         try {
             //Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
             Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");

@@ -7,6 +7,19 @@ import com.mishra.*;
 public class EnquireTransaction {
 	private String UName, StartDate, EndDate;
 	private Vector C_Names, Rows;
+
+	// Optional injected connection factory for testability. When null the
+	// original production behaviour (new DBConnection()) is preserved.
+	private DBConnection dbConnection;
+
+	// Package-private setter used by unit tests to inject a mocked DBConnection.
+	void setDBConnection(DBConnection db) {
+		this.dbConnection = db;
+	}
+
+	private DBConnection getDBConnection() {
+		return dbConnection != null ? dbConnection : new DBConnection();
+	}
 	public Vector[] FetchTransaction(String Uname,String StartDate,String EndDate) {
 		boolean done = !StartDate.equals("") && !EndDate.equals("");
 		try {
@@ -22,7 +35,7 @@ public class EnquireTransaction {
 			  C_Names.addElement("To_Acc");
 			  C_Names.addElement("Trans_Type");
 
-			  DBConnection ToDB = new DBConnection();
+			  DBConnection ToDB = getDBConnection();
 			  Connection DBConn = ToDB.openConn();
 			  Statement stmt = DBConn.createStatement();
 			  String SQL_Command = " SELECT * FROM Transactions WHERE CustomerID = '"+UName+"' AND TransactionDate BETWEEN '"+StartDate+"' AND '"+EndDate+"'";
@@ -30,7 +43,7 @@ public class EnquireTransaction {
 	          ResultSetMetaData rsmd = rslt.getMetaData();
 	          while(rslt.next())
 	          {
-				  DBConnection DC = new DBConnection();
+				  DBConnection DC = getDBConnection();
 				  Rows.addElement(DC.getNextRow(rslt,rsmd));
 				  int CN = rsmd.getColumnCount();
 				  for (int i = 0; i<=CN; i++)

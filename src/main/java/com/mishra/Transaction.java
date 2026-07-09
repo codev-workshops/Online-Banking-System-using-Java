@@ -21,6 +21,19 @@ public class Transaction
 	private String Startdate, Enddate;
 	private Vector TransStore = new Vector();
 
+	// Optional injected connection factory for testability. When null the
+	// original production behaviour (new DBConnection()) is preserved.
+	private DBConnection dbConnection;
+
+	// Package-private setter used by unit tests to inject a mocked DBConnection.
+	void setDBConnection(DBConnection db) {
+		this.dbConnection = db;
+	}
+
+	private DBConnection getDBConnection() {
+		return dbConnection != null ? dbConnection : new DBConnection();
+	}
+
 
 
 	public Transaction(String AccountType, String Cust_ID, String Amt){
@@ -47,7 +60,7 @@ public class Transaction
 			     boolean done = true;
 						try {
 						    if (done) {
-						        DBConnection ToDB = new DBConnection(); //Have a connection to the DB
+						        DBConnection ToDB = getDBConnection(); //Have a connection to the DB
 						        Connection DBConn = ToDB.openConn();
 						        Statement Stmt = DBConn.createStatement();
 						        String SQL_Command;
@@ -98,7 +111,7 @@ public class Transaction
 
 						try {
 							done = !Startdate.equals("") && !Enddate.equals("");
-					        DBConnection ToDB = new DBConnection(); //Have a connection to the DB
+					        DBConnection ToDB = getDBConnection(); //Have a connection to the DB
 					        Connection DBConn = ToDB.openConn();
 					        Statement Stmt = DBConn.createStatement();
 					        String SQL_Command = "SELECT * FROM Transactions WHERE TransactionDate BETWEEN '"+Startdate+ "' AND '"+Enddate+ "'"; //SQL query command
