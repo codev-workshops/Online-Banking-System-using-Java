@@ -52,11 +52,17 @@ public class SignUpServlet extends HttpServlet {
       Re_enterPassword = req.getParameter( "RePasswordField" );
       CustomerName = req.getParameter( "NameField" );
 
-      Account Acct = new Account(Username, Password, Re_enterPassword, CustomerName);
+      Account Acct = createAccount(Username, Password, Re_enterPassword, CustomerName);
       if (Acct.signUp())
            showSuccess();
       else
            output.println("Account creation failed because of existing username or invalid username. Please try again!");
+   }
+
+   //factory seam so tests can inject a mock Account
+   protected Account createAccount(String username, String password,
+                                   String reEnterPassword, String customerName) {
+      return new Account(username, password, reEnterPassword, customerName);
    }
 
    public void showSuccess()

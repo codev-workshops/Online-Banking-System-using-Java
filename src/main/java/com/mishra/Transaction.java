@@ -42,12 +42,22 @@ public class Transaction
 			Enddate = ED;
 		}
 
+	private DBConnection dbConnection;
+
+	void setDbConnection(DBConnection db) {
+		this.dbConnection = db;
+	}
+
+	protected DBConnection createDbConnection() {
+		return dbConnection != null ? dbConnection : new DBConnection();
+	}
+
 
 	public String recordTransaction() {
 			     boolean done = true;
 						try {
 						    if (done) {
-						        DBConnection ToDB = new DBConnection(); //Have a connection to the DB
+						        DBConnection ToDB = createDbConnection(); //Have a connection to the DB
 						        Connection DBConn = ToDB.openConn();
 						        Statement Stmt = DBConn.createStatement();
 						        String SQL_Command;
@@ -98,7 +108,7 @@ public class Transaction
 
 						try {
 							done = !Startdate.equals("") && !Enddate.equals("");
-					        DBConnection ToDB = new DBConnection(); //Have a connection to the DB
+					        DBConnection ToDB = createDbConnection(); //Have a connection to the DB
 					        Connection DBConn = ToDB.openConn();
 					        Statement Stmt = DBConn.createStatement();
 					        String SQL_Command = "SELECT * FROM Transactions WHERE TransactionDate BETWEEN '"+Startdate+ "' AND '"+Enddate+ "'"; //SQL query command

@@ -44,7 +44,7 @@ public class LoginServlet extends HttpServlet {
       //the servlet as part of a post request
       Username = req.getParameter( "UserName" );
       Password = req.getParameter( "PassWord" );
-      Account Acct = new Account(Username, Password);
+      Account Acct = createAccount(Username, Password);
       String CustomerName = Acct.signIn();
       if (!CustomerName.equals("")){
 		  System.out.println("login username=" + Username);
@@ -56,6 +56,11 @@ public class LoginServlet extends HttpServlet {
            output.println("login failed");
    }
 
+
+   //factory seam so tests can inject a mock Account
+   protected Account createAccount(String username, String password) {
+      return new Account(username, password);
+   }
 
    //this "cleanup" method is called when a servlet is terminated by the server
    public void destroy() {

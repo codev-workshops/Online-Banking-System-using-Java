@@ -25,11 +25,21 @@ public class Account
 		Password = PassW;
 	}
 
+	private DBConnection dbConnection;
+
+	void setDbConnection(DBConnection db) {
+		this.dbConnection = db;
+	}
+
+	protected DBConnection createDbConnection() {
+		return dbConnection != null ? dbConnection : new DBConnection();
+	}
+
     public boolean signUp() {
 		boolean done = !Username.equals("") && !Password.equals("") && !Password1.equals("") && Password.equals(Password1);
 		try {
 		    if (done) {
-		        DBConnection ToDB = new DBConnection(); //Have a connection to the DB
+		        DBConnection ToDB = createDbConnection(); //Have a connection to the DB
 		        Connection DBConn = ToDB.openConn();
 		        Statement Stmt = DBConn.createStatement();
 		        String SQL_Command = "SELECT Username FROM Account WHERE Username ='"+Username+"'"; //SQL query command
@@ -68,7 +78,7 @@ public class Account
 		{
 		    if (done)
 		    {
-		        DBConnection ToDB = new DBConnection(); //Have a connection to the DB
+		        DBConnection ToDB = createDbConnection(); //Have a connection to the DB
 		        Connection DBConn = ToDB.openConn();
 		        Statement Stmt = DBConn.createStatement();
 		        String SQL_Command = "SELECT Name FROM Account WHERE Username ='"+Username+ "'AND Password ='"+Password+"'"; //SQL query command
@@ -105,7 +115,7 @@ public class Account
 	public boolean changePassword(String NewPassword) {	//5
 		boolean done = false;
 		try {		//20
-		        DBConnection ToDB = new DBConnection(); //Have a connection to the DB
+		        DBConnection ToDB = createDbConnection(); //Have a connection to the DB
 		        Connection DBConn = ToDB.openConn();
 		        Statement Stmt = DBConn.createStatement();
 		        String SQL_Command = "SELECT * FROM Account WHERE Username ='"+Username+ "'AND Password ='"+Password+"'"; //SQL query command
