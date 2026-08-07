@@ -11,21 +11,26 @@ import java.sql.*;
 public class DBConnection {
 
     private Connection connection;
-    private String URL;
+    private final String URL;
+    private final String user;
+    private final String password;
 
     public DBConnection() {
-        //URL = "jdbc:odbc:JavaClass";
-        URL ="jdbc:sqlserver://127.0.0.1:1433;databaseName=JavaClass;integratedSecurity=true;";//"user=tang;password=;
+        URL = env("DB_URL", "jdbc:postgresql://localhost:5432/javaclass");
+        user = env("DB_USER", "banking");
+        password = env("DB_PASSWORD", "banking");
         connection = null;
+    }
 
+    private static String env(String name, String fallback) {
+        String value = System.getenv(name);
+        return (value == null || value.isEmpty()) ? fallback : value;
     }
 
     public Connection openConn() {
         try {
-            //Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
-            Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-            connection = DriverManager.getConnection(URL);
-            //connection = DriverManager.getConnection(URL, "tang", "xxxxxx");
+            Class.forName("org.postgresql.Driver");
+            connection = DriverManager.getConnection(URL, user, password);
         }
         catch ( Exception e ) {
             e.printStackTrace();

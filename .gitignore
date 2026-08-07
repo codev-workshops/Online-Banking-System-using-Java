@@ -1,0 +1,5 @@
+target/
+*.war
+*.class
+Dockerfile.local
+.mvn-settings-local.xml

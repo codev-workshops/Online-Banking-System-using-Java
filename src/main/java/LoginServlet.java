@@ -51,7 +51,7 @@ public class LoginServlet extends HttpServlet {
           //showSuccess();
           req.setAttribute("Username", Username);
 		  req.setAttribute("CustomerName", CustomerName);
-		  req.getRequestDispatcher("/CSCI6810/afterlogin.jsp").forward(req, res);
+		  req.getRequestDispatcher("/afterlogin.jsp").forward(req, res);
       }else
            output.println("login failed");
    }

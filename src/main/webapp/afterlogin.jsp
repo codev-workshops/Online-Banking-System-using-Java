@@ -1,7 +1,7 @@
 <%@ page import="java.io.*" %>
 <%@ page import="java.util.*" %>
 <%@ page import="java.lang.*" %>
-<%@ page import="com.mishra.*;" %>
+<%@ page import="com.mishra.*" %>
 
 <%
 	String Username = new String("");
@@ -22,7 +22,7 @@
 </HEAD>
 <BODY>
 <h4 ALIGN='center'>Welcome to your link page</h4>
-<FORM NAME=\"LoginPage\" ACTION=\"/OnlineLoginServlet\" METHOD =\"POST\">
+<FORM NAME=\"LoginPage\" ACTION=\"OnlineLoginServlet\" METHOD =\"POST\">
 <TR bgcolor='#ECFAEB'>
 <div id='navigation'>
 <ul>

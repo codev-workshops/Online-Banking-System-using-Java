@@ -7,7 +7,7 @@
 <%@ page import="java.io.*" %>
 <%@ page import="java.util.*" %>
 <%@ page import="java.lang.*" %>
-<%@ page import="Com.Gandhi.*;" %>
+<%@ page import="com.mishra.*" %>
 
 <%
 String UName = new String("");
@@ -19,13 +19,10 @@ String UName = new String("");
 	//out.println("Your customername is " + Name);
 	
 	
-	CheckingAccount ca;
-	SavingsAccount sa;
-	ca = new CheckingAccount();
-	ca.getAccountInfo(UName);
-	sa = new SavingsAccount();
-        sa.getAccountInfo(UName);
-	
+	CheckingAccount ca = new CheckingAccount();
+	SavingAccount sa = new SavingAccount();
+	String checkingNumber = ca.getAccno(UName);
+	String savingNumber = sa.getAccno(UName);
 %>
 
 <HTML><HEAD></HEAD>
@@ -42,13 +39,13 @@ String UName = new String("");
             </TR>
             <TR bgcolor='#F1F1FD'>
 	        <td><%= "Checking Account" %></td> 
-		<td><%= ca.getAccountNumber().substring(ca.getAccountNumber().length()-4) %></td>
-		<td><%= ca.getBalanceValue() %></td>
+		<td><%= checkingNumber == null ? "none" : checkingNumber %></td>
+		<td><%= checkingNumber == null ? "-" : String.valueOf(ca.getBalance(checkingNumber)) %></td>
             </TR>
             <TR bgcolor='#F1F1FD'>
 	    	<td><%= "Saving Account" %></td> 
-		<td><%= sa.getSavingsAccountNumber().substring(sa.getSavingsAccountNumber().length()-4) %></td>
-		<td><%= sa.getBalanceValue() %></td>
+		<td><%= savingNumber == null ? "none" : savingNumber %></td>
+		<td><%= savingNumber == null ? "-" : String.valueOf(sa.getBalance(savingNumber)) %></td>
             </TR>
             </TABLE><BR>
 		<CENTER><INPUT TYPE="SUBMIT" NAME='submitBNTN' VALUE='Refresh'></CENTER><BR>
