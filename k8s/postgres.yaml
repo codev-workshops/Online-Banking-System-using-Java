@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: banking-db
+stringData:
+  DB_USER: banking
+  DB_PASSWORD: banking
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: banking-db-init
+data:
+  init.sql: |
+    CREATE TABLE IF NOT EXISTS Account (
+        Username VARCHAR(50) PRIMARY KEY,
+        Password VARCHAR(50) NOT NULL,
+        Name     VARCHAR(50) NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS CheckingAccount (
+        CheckingAccountNumber VARCHAR(50) PRIMARY KEY,
+        CustomerName          VARCHAR(50),
+        Balance               REAL,
+        CustomerID            VARCHAR(50) REFERENCES Account(Username)
+    );
+    CREATE TABLE IF NOT EXISTS SavingAccount (
+        SavingAccountNumber VARCHAR(50) PRIMARY KEY,
+        CustomerName        VARCHAR(50),
+        Balance             REAL,
+        InterestRate        REAL DEFAULT 0.01,
+        CustomerID          VARCHAR(50) REFERENCES Account(Username)
+    );
+    CREATE TABLE IF NOT EXISTS Transactions (
+        TransactionNumber VARCHAR(50) PRIMARY KEY,
+        TransactionAmount REAL,
+        TransactionType   VARCHAR(50),
+        TransactionTime   VARCHAR(50),
+        TransactionDate   VARCHAR(50),
+        FromAccount       VARCHAR(50),
+        ToAccount         VARCHAR(50),
+        CustomerID        VARCHAR(50)
+    );
+    INSERT INTO Account (Username, Password, Name)
+    VALUES ('demo', 'demo', 'Demo Customer') ON CONFLICT (Username) DO NOTHING;
+    INSERT INTO CheckingAccount (CheckingAccountNumber, CustomerName, Balance, CustomerID)
+    VALUES ('CHK1000000001', 'Demo Customer', 2500.00, 'demo') ON CONFLICT (CheckingAccountNumber) DO NOTHING;
+    INSERT INTO SavingAccount (SavingAccountNumber, CustomerName, Balance, InterestRate, CustomerID)
+    VALUES ('SAV1000000001', 'Demo Customer', 10750.50, 0.02, 'demo') ON CONFLICT (SavingAccountNumber) DO NOTHING;
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banking-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: banking-db
+  template:
+    metadata:
+      labels:
+        app: banking-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          env:
+            - name: POSTGRES_DB
+              value: javaclass
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: banking-db
+                  key: DB_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: banking-db
+                  key: DB_PASSWORD
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: init
+              mountPath: /docker-entrypoint-initdb.d
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "banking", "-d", "javaclass"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: init
+          configMap:
+            name: banking-db-init
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: banking-db
+spec:
+  selector:
+    app: banking-db
+  ports:
+    - port: 5432
+      targetPort: 5432
