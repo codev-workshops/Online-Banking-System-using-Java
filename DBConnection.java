@@ -15,7 +15,9 @@ public class DBConnection {
 
     public DBConnection() {
         //URL = "jdbc:odbc:JavaClass";
-        URL ="jdbc:sqlserver://127.0.0.1:1433;databaseName=JavaClass;integratedSecurity=true;";//"user=tang;password=;
+        //Override with -Ddb.url=... or the DB_URL environment variable; defaults to the original Windows setup.
+        URL = System.getProperty("db.url", System.getenv().getOrDefault("DB_URL",
+                "jdbc:sqlserver://127.0.0.1:1433;databaseName=JavaClass;integratedSecurity=true;"));//"user=tang;password=;
         connection = null;
 
     }
