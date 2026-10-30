@@ -8,7 +8,7 @@
 <HTML><HEAD></HEAD>
 <BODY>
     <FORM NAME="OpenBankAccountForm" ACTION="/CSCI6810/OpenBankAccount.jsp" METHOD ="POST">
-        <INPUT TYPE='hidden' NAME='UserID' VALUE='<%=request.getParameter("UserID")%>'>
+        <INPUT TYPE='hidden' NAME='csrfToken' VALUE='<%= com.mishra.AuthFilter.csrfToken(session) %>'>
 
         <TABLE cellPadding=3 ALIGN='center'>
 
@@ -22,18 +22,6 @@
                 </TD>
             </TR>
 
-            <TR bgcolor='#F1F1FD'>
-                <TD>User Name:</TD>
-                <TD>
-                   <INPUT TYPE='text' NAME='UserNameField' Value='' SIZE='15'>
-                </TD>
-            </TR>
-            <TR bgcolor='#F1F1FD'>
-	        <TD>Customer Name:</TD>
-	        <TD>
-	           <INPUT TYPE='text' NAME='CustomerNameField' Value='' SIZE='15'>
-	        </TD>
-            </TR>
             <TR bgcolor='#F1F1FD'>
 	    	<TD>Account Number:</TD>
 	    	<TD>

@@ -1,139 +1,124 @@
 /******************************************************************************
-*	Program Author: Kavita Mishra for CSCI 6810 Java and the Internet	  *
-*	Date: September, 2018													  *
-*******************************************************************************/
+ *	Program Author: Kavita Mishra for CSCI 6810 Java and the Internet	  *
+ *	Date: September, 2018													  *
+ *******************************************************************************/
 
 package com.mishra;
 
-import java.lang.*; //including Java packages used by this program
-import java.sql.*;
-import com.mishra.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.logging.Logger;
 
-public class Account
-{
-	private String Username, Password, Password1, Name;
+/**
+ * A customer login account.
+ *
+ * <p>Passwords are stored as {@link PasswordUtil} hashes. Rows created before hashing was
+ * introduced hold plaintext passwords; those never verify, so the accounts need a forced password
+ * reset (or a one-off migration that hashes the existing values) before they can sign in again.
+ */
+public class Account {
+  private static final Logger LOG = Logger.getLogger(Account.class.getName());
+  private static final String TIMING_DUMMY_HASH = PasswordUtil.hash("timing-equalization-only");
 
-	public Account(String UN, String PassW, String PassW1, String NM) {
-		Username = UN;
-		Password = PassW;
-		Password1 = PassW1;
-		Name = NM;
-	}
+  private final String username;
+  private final String password;
+  private String password1;
+  private String name;
 
-	public Account(String UN, String PassW) {
-		Username = UN;
-		Password = PassW;
-	}
+  /** Creates an account for sign-up. */
+  public Account(String un, String passW, String passW1, String nm) {
+    username = un;
+    password = passW;
+    password1 = passW1;
+    name = nm;
+  }
 
-    public boolean signUp() {
-		boolean done = !Username.equals("") && !Password.equals("") && !Password1.equals("") && Password.equals(Password1);
-		try {
-		    if (done) {
-		        DBConnection ToDB = new DBConnection(); //Have a connection to the DB
-		        Connection DBConn = ToDB.openConn();
-		        Statement Stmt = DBConn.createStatement();
-		        String SQL_Command = "SELECT Username FROM Account WHERE Username ='"+Username+"'"; //SQL query command
-		        ResultSet Rslt = Stmt.executeQuery(SQL_Command); //Inquire if the username exsits.
-		        done = done && !Rslt.next();
-		        if (done) {
-				    SQL_Command = "INSERT INTO Account(Username, Password, Name) VALUES ('"+Username+ "','"+Password+"','"+Name+"')"; //Save the username, password and Name
-				    Stmt.executeUpdate(SQL_Command);
-			    }
-			    Stmt.close();
-			    ToDB.closeConn();
-			}
-		}
-	    catch(java.sql.SQLException e)
-	    {         done = false;
-				 System.out.println("SQLException: " + e);
-				 while (e != null)
-				 {   System.out.println("SQLState: " + e.getSQLState());
-					 System.out.println("Message: " + e.getMessage());
-					 System.out.println("Vendor: " + e.getErrorCode());
-					 e = e.getNextException();
-					 System.out.println("");
-				 }
-	    }
-	    catch (java.lang.Exception e)
-	    {         done = false;
-				 System.out.println("Exception: " + e);
-				 e.printStackTrace ();
-	    }
-	    return done;
-	}
-  public String signIn()
-  {
-		boolean done = !Username.equals("") && !Password.equals("");
-		try
-		{
-		    if (done)
-		    {
-		        DBConnection ToDB = new DBConnection(); //Have a connection to the DB
-		        Connection DBConn = ToDB.openConn();
-		        Statement Stmt = DBConn.createStatement();
-		        String SQL_Command = "SELECT Name FROM Account WHERE Username ='"+Username+ "'AND Password ='"+Password+"'"; //SQL query command
-		        ResultSet Rslt = Stmt.executeQuery(SQL_Command); //Inquire if the username and password exsits.
-		        done = done && Rslt.next();
-		        if (done)
-		        {
-				     Name=Rslt.getString(1);
-			    }
-			    Stmt.close();
-			    ToDB.closeConn();
-			}
+  /** Creates an account for sign-in or password change. */
+  public Account(String un, String passW) {
+    username = un;
+    password = passW;
+  }
 
-	    }
-	    catch(java.sql.SQLException e)
-	    {         done = false;
-				 System.out.println("SQLException: " + e);
-				 while (e != null)
-				 {   System.out.println("SQLState: " + e.getSQLState());
-					 System.out.println("Message: " + e.getMessage());
-					 System.out.println("Vendor: " + e.getErrorCode());
-					 e = e.getNextException();
-					 System.out.println("");
-				 }
-	    }
-	    catch (java.lang.Exception e)
-	    {         done = false;
-				 System.out.println("Exception: " + e);
-				 e.printStackTrace ();
-	    }
-	    return Name;
-	}
+  /** Creates the account if the username is free and both passwords match. */
+  public boolean signUp() {
+    if (isBlank(username) || isBlank(password) || !password.equals(password1)) {
+      return false;
+    }
+    try (Connection conn = new DBConnection().requireConn();
+        PreparedStatement find =
+            conn.prepareStatement("SELECT Username FROM Account WHERE Username = ?")) {
+      find.setString(1, username);
+      try (ResultSet rslt = find.executeQuery()) {
+        if (rslt.next()) {
+          return false;
+        }
+      }
+      try (PreparedStatement insert =
+          conn.prepareStatement("INSERT INTO Account(Username, Password, Name) VALUES (?, ?, ?)")) {
+        insert.setString(1, username);
+        insert.setString(2, PasswordUtil.hash(password));
+        insert.setString(3, name);
+        return insert.executeUpdate() == 1;
+      }
+    } catch (SQLException e) {
+      DBConnection.logSqlException(LOG, "signUp", e);
+      return false;
+    }
+  }
 
-	public boolean changePassword(String NewPassword) {	//5
-		boolean done = false;
-		try {		//20
-		        DBConnection ToDB = new DBConnection(); //Have a connection to the DB
-		        Connection DBConn = ToDB.openConn();
-		        Statement Stmt = DBConn.createStatement();
-		        String SQL_Command = "SELECT * FROM Account WHERE Username ='"+Username+ "'AND Password ='"+Password+"'"; //SQL query command
-		        ResultSet Rslt = Stmt.executeQuery(SQL_Command); //Inquire if the username exsits.
-		        if (Rslt.next()) {
-				    SQL_Command = "UPDATE Account SET Password='"+NewPassword+"' WHERE Username ='"+Username+"'"; //Save the username, password and Name
-				    Stmt.executeUpdate(SQL_Command);
-			        Stmt.close();
-			        ToDB.closeConn();
-                    done=true;
-				}
-		}
-	    catch(java.sql.SQLException e)		//5
-	    {         done = false;
-				 System.out.println("SQLException: " + e);
-				 while (e != null)
-				 {   System.out.println("SQLState: " + e.getSQLState());
-					 System.out.println("Message: " + e.getMessage());
-					 System.out.println("Vendor: " + e.getErrorCode());
-					 e = e.getNextException();
-					 System.out.println("");
-				 }
-	    }
-	    catch (java.lang.Exception e)
-	    {         done = false;
-				 System.out.println("Exception: " + e);
-				 e.printStackTrace ();
-	    }
-	    return done;
-	}
+  /** Returns the customer name if the credentials are valid, otherwise {@code ""}. */
+  public String signIn() {
+    String storedHash = null;
+    String customerName = null;
+    if (isBlank(username) || isBlank(password)) {
+      return "";
+    }
+    try (Connection conn = new DBConnection().requireConn();
+        PreparedStatement stmt =
+            conn.prepareStatement("SELECT Name, Password FROM Account WHERE Username = ?")) {
+      stmt.setString(1, username);
+      try (ResultSet rslt = stmt.executeQuery()) {
+        if (rslt.next()) {
+          customerName = rslt.getString("Name");
+          storedHash = rslt.getString("Password");
+        }
+      }
+    } catch (SQLException e) {
+      DBConnection.logSqlException(LOG, "signIn", e);
+      return "";
+    }
+    if (storedHash == null) {
+      // Hash anyway so unknown usernames take as long as wrong passwords.
+      PasswordUtil.verify(password, TIMING_DUMMY_HASH);
+      return "";
+    }
+    if (!PasswordUtil.verify(password, storedHash) || customerName == null) {
+      return "";
+    }
+    name = customerName;
+    return customerName;
+  }
+
+  /** Replaces the password after verifying the current one. */
+  public boolean changePassword(String newPassword) {
+    if (isBlank(newPassword) || "".equals(signIn())) {
+      return false;
+    }
+    try (Connection conn = new DBConnection().requireConn();
+        PreparedStatement stmt =
+            conn.prepareStatement("UPDATE Account SET Password = ? WHERE Username = ?")) {
+      stmt.setString(1, PasswordUtil.hash(newPassword));
+      stmt.setString(2, username);
+      return stmt.executeUpdate() == 1;
+    } catch (SQLException e) {
+      DBConnection.logSqlException(LOG, "changePassword", e);
+      return false;
+    }
+  }
+
+  private static boolean isBlank(String value) {
+    return value == null || value.isEmpty();
+  }
 }

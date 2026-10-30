@@ -1,117 +1,91 @@
 /******************************************************************************
-*	Program Author: Dr. Yongming Tang for CSCI 6810 Java and the Internet	  *
-*	Date: September, 2012													  *
-*******************************************************************************/
+ *	Program Author: Dr. Yongming Tang for CSCI 6810 Java and the Internet	  *
+ *	Date: September, 2012													  *
+ *******************************************************************************/
 
-import java.io.*;
-import javax.servlet.*;  //package for GenericServlet
-import javax.servlet.http.*;  //package for HttpServlet
-import java.util.*;
-//import Course.Java.ProSample.*;
-import com.mishra.*;
+import com.mishra.Account;
+import com.mishra.Html;
+import java.io.IOException;
+import java.io.PrintWriter;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
+/** Creates a customer login account. Accepts POST only. */
 public class SignUpServlet extends HttpServlet {
-   private String Username, Password, Re_enterPassword, CustomerName;
-   private PrintWriter output;
+  @Override
+  protected void doPost(HttpServletRequest req, HttpServletResponse res)
+      throws ServletException, IOException {
+    PrintWriter output = res.getWriter();
+    res.setContentType("text/html");
+    String username = req.getParameter("UsernameField");
+    String password = req.getParameter("PasswordField");
+    String reEnterPassword = req.getParameter("RePasswordField");
+    String customerName = req.getParameter("NameField");
 
-   //a method called automatically to initialize the servlet
-   public void init( ServletConfig config )
-      throws ServletException
-   {
-      super.init( config );
-      Username = new String("");
-      Password = new String("");
-      Re_enterPassword = new String("");
-      CustomerName = new String("");
+    Account acct = new Account(username, password, reEnterPassword, customerName);
+    if (acct.signUp()) {
+      showSuccess(output, username);
+    } else {
+      output.println(
+          "Account creation failed because of existing username or invalid username."
+              + " Please try again!");
+    }
+  }
 
-   }
+  private void showSuccess(PrintWriter output, String username) {
+    StringBuilder buf = new StringBuilder();
+    buf.append("<HTML><HEAD></HEAD>\n");
+    buf.append("<BODY bgcolor='#F1F1FD'>\n");
+    buf.append(
+        "<h4 ALIGN='center'>Congratulations! You have an account with us. Thank you! You can login"
+            + " now.</h4>\n");
+    buf.append("<FORM NAME=\"LoginPage\" ACTION=\"/LoginSrvlet\" METHOD =\"POST\">\n");
 
-   //a method included in class HttpServlet to respond
-   //to post requests from a client.
-   public void doGet ( HttpServletRequest req, HttpServletResponse res )
-      throws ServletException, IOException
-   {	doPost(req, res);
-   }
+    buf.append("<TABLE cellPadding='3' ALIGN='center'>\n");
+    buf.append("<TR bgcolor='#ECFAEB'>\n");
+    buf.append("<TD>USERNAME:</TD>\n");
+    buf.append("<TD>\n");
+    buf.append(
+        "<INPUT TYPE='text' NAME='UserName' Value=\""
+            + Html.escape(username)
+            + "\" SIZE='15' focused>\n");
+    buf.append("</TD>\n");
+    buf.append("</TR>\n");
 
-   //a method included in class HttpServlet to respond
-   //to post requests from a client.
-   public void doPost ( HttpServletRequest req, HttpServletResponse res )
-      throws ServletException, IOException
-   {
-      //obtains a character-based output stream that enables
-      //text data to be sent to the client
-      output = res.getWriter();
+    buf.append("<TR bgcolor='#ECFAEB'>\n");
+    buf.append("<TD>PASSWORD:</TD>\n");
+    buf.append("<TD>\n");
+    buf.append("<INPUT TYPE='password' NAME='PassWord' Value='' SIZE='15'>\n");
+    buf.append("<INPUT TYPE='button' NAME='submitBTN' VALUE='Login' onClick=\"checkInputs()\">\n");
+    buf.append("</TD>\n");
+    buf.append("</TR>\n");
+    buf.append("</TABLE>\n");
 
-      //specifies the MIME type of the response to the browser
-      res.setContentType( "text/html" );
+    buf.append("</FORM>\n");
+    buf.append("</BODY>\n");
 
-      //returns the value associated with a parameter sent to
-      //the servlet as part of a post request
-      Username = req.getParameter( "UsernameField" );
-      Password = req.getParameter( "PasswordField" );
-      Re_enterPassword = req.getParameter( "RePasswordField" );
-      CustomerName = req.getParameter( "NameField" );
+    buf.append("<SCRIPT LANGUAGE=\"JavaScript\">\n");
+    buf.append("function checkInputs()\n");
+    buf.append("{\n");
+    buf.append("var Prompts = \"\";\n");
+    buf.append("Username = window.document.LoginPage.UserName.value;\n");
+    buf.append("Password = window.document.LoginPage.PassWord.value;\n");
+    buf.append("if (Username == \"\" || Password == \"\") {\n");
+    buf.append("if (Username == \"\")\n");
+    buf.append("Prompts +=\"Please enter your username!\\n\";\n");
+    buf.append("if (Password == \"\")\n");
+    buf.append("Prompts +=\"Please enter your password!\\n\";\n");
+    buf.append("if (Prompts != \"\")\n");
+    buf.append("window.alert(Prompts);\n");
+    buf.append("} else {\n");
+    buf.append("document.LoginPage.submit();\n");
+    buf.append("}\n");
+    buf.append("}\n");
 
-      Account Acct = new Account(Username, Password, Re_enterPassword, CustomerName);
-      if (Acct.signUp())
-           showSuccess();
-      else
-           output.println("Account creation failed because of existing username or invalid username. Please try again!");
-   }
-
-   public void showSuccess()
-   {
-        StringBuffer Buf = new StringBuffer();
-		Buf.append("<HTML><HEAD></HEAD>\n");
-		Buf.append("<BODY bgcolor='#F1F1FD'>\n");
-		Buf.append("<h4 ALIGN='center'>Congratulations! You have an account with us. Thank you! You can login now.</h4>\n");
-			Buf.append("<FORM NAME=\"LoginPage\" ACTION=\"/LoginSrvlet\" METHOD =\"POST\">\n");
-
-			   Buf.append("<TABLE cellPadding='3' ALIGN='center'>\n");
-					Buf.append("<TR bgcolor='#ECFAEB'>\n");
-					   Buf.append("<TD>USERNAME:</TD>\n");
-					  Buf.append("<TD>\n");
-						  Buf.append("<INPUT TYPE='text' NAME='UserName' Value=\""+Username+"\" SIZE='15' focused>\n");
-					  Buf.append("</TD>\n");
-					Buf.append("</TR>\n");
-
-					Buf.append("<TR bgcolor='#ECFAEB'>\n");
-					  Buf.append("<TD>PASSWORD:</TD>\n");
-					  Buf.append("<TD>\n");
-						   Buf.append("<INPUT TYPE='password' NAME='PassWord' Value='' SIZE='15'>\n");
-						   Buf.append("<INPUT TYPE='button' NAME='submitBTN' VALUE='Login' onClick=\"checkInputs()\">\n");
-					  Buf.append("</TD>\n");
-					Buf.append("</TR>\n");
-				Buf.append("</TABLE>\n");
-
-		   Buf.append("</FORM>\n");
-		Buf.append("</BODY>\n");
-
-		Buf.append("<SCRIPT LANGUAGE=\"JavaScript\">\n");
-		   Buf.append("function checkInputs()\n");
-		   Buf.append("{\n");
-			   Buf.append("var Prompts = \"\";\n");
-			   Buf.append("Username = window.document.LoginPage.UserName.value;\n");
-			   Buf.append("Password = window.document.LoginPage.PassWord.value;\n");
-			   Buf.append("if (Username == \"\" || Password == \"\") {\n");
-				  Buf.append("if (Username == \"\")\n");
-					 Buf.append("Prompts +=\"Please enter your username!\\n\";\n");
-				  Buf.append("if (Password == \"\")\n");
-					 Buf.append("Prompts +=\"Please enter your password!\\n\";\n");
-				  Buf.append("if (Prompts != \"\")\n");
-					 Buf.append("window.alert(Prompts);\n");
-			   Buf.append("} else {\n");
-				  Buf.append("document.LoginPage.submit();\n");
-			   Buf.append("}\n");
-		   Buf.append("}\n");
-
-		Buf.append("</SCRIPT>\n");
-		Buf.append("</HTML>\n");
-		output.println(Buf.toString());
-   }
-
-   //this "cleanup" method is called when a servlet is terminated by the server
-   public void destroy() {
-       output.close();
-   }
+    buf.append("</SCRIPT>\n");
+    buf.append("</HTML>\n");
+    output.println(buf.toString());
+  }
 }

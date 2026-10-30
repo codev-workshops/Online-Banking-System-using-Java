@@ -26,6 +26,12 @@
       <artifactId>mssql-jdbc</artifactId>
       <version>12.8.1.jre11</version>
     </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>5.10.2</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -86,11 +92,16 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.2.5</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-war-plugin</artifactId>
         <version>3.4.0</version>
         <configuration>
           <warSourceDirectory>${project.basedir}</warSourceDirectory>
-          <warSourceIncludes>*.html,*.jsp,WEB-INF/web.xml</warSourceIncludes>
+          <warSourceIncludes>*.html,*.jsp,WEB-INF/web.xml,WEB-INF/classes/logging.properties</warSourceIncludes>
           <!-- Pages link to each other under /CSCI6810/, so serve them there too. -->
           <webResources>
             <resource>
