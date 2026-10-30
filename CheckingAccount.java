@@ -46,7 +46,8 @@ public class CheckingAccount {
       find.setString(1, checkingAccountNumber);
       try (ResultSet rslt = find.executeQuery()) {
         if (rslt.next()) {
-          return false;
+          return AuditLog.failure(
+              AuditLog.Event.ACCOUNT_OPEN, customerId, auditAccount(), amount, "account exists");
         }
       }
       try (PreparedStatement insert =
@@ -57,11 +58,17 @@ public class CheckingAccount {
         insert.setString(2, customerName);
         insert.setFloat(3, amount);
         insert.setString(4, customerId);
-        return insert.executeUpdate() == 1;
+        if (insert.executeUpdate() != 1) {
+          return AuditLog.failure(
+              AuditLog.Event.ACCOUNT_OPEN, customerId, auditAccount(), amount, "not inserted");
+        }
+        return AuditLog.success(
+            AuditLog.Event.ACCOUNT_OPEN, customerId, auditAccount(), amount, amount, null);
       }
     } catch (SQLException e) {
       DBConnection.logSqlException(LOG, "openAcct", e);
-      return false;
+      return AuditLog.failure(
+          AuditLog.Event.ACCOUNT_OPEN, customerId, auditAccount(), amount, "database error");
     }
   }
 
@@ -108,20 +115,34 @@ public class CheckingAccount {
 
   /** Adds the amount to this account if customer {@code cId} owns it. */
   public boolean deposit(String cId) {
-    if (isBlank(checkingAccountNumber) || isBlank(customerId) || amount <= 0) {
-      return false;
-    }
-    Float current = ownedBalance(cId);
-    return current != null && updateBalance(cId, current + amount);
+    return move(AuditLog.Event.DEPOSIT, cId, amount);
   }
 
   /** Takes the amount from this account if customer {@code cId} owns it and funds suffice. */
   public boolean Withdraw(String cId) {
+    return move(AuditLog.Event.WITHDRAWAL, cId, -amount);
+  }
+
+  /** Adds {@code delta} to the balance of this account owned by {@code cId}, and audits it. */
+  private boolean move(AuditLog.Event event, String cId, float delta) {
     if (isBlank(checkingAccountNumber) || isBlank(customerId) || amount <= 0) {
-      return false;
+      return AuditLog.failure(event, cId, auditAccount(), amount, "invalid request");
     }
     Float current = ownedBalance(cId);
-    return current != null && current >= amount && updateBalance(cId, current - amount);
+    if (current == null) {
+      return AuditLog.failure(event, cId, auditAccount(), amount, "account not found for customer");
+    }
+    if (current + delta < 0) {
+      return AuditLog.failure(event, cId, auditAccount(), amount, "insufficient funds");
+    }
+    if (!updateBalance(cId, current + delta)) {
+      return AuditLog.failure(event, cId, auditAccount(), amount, "balance update failed");
+    }
+    return AuditLog.success(event, cId, auditAccount(), amount, balance, null);
+  }
+
+  private String auditAccount() {
+    return "checking:" + checkingAccountNumber;
   }
 
   private Float ownedBalance(String cId) {

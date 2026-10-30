@@ -101,7 +101,7 @@
         <version>3.4.0</version>
         <configuration>
           <warSourceDirectory>${project.basedir}</warSourceDirectory>
-          <warSourceIncludes>*.html,*.jsp,WEB-INF/web.xml</warSourceIncludes>
+          <warSourceIncludes>*.html,*.jsp,WEB-INF/web.xml,WEB-INF/classes/logging.properties</warSourceIncludes>
           <!-- Pages link to each other under /CSCI6810/, so serve them there too. -->
           <webResources>
             <resource>

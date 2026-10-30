@@ -80,11 +80,24 @@ public class Transaction {
       insert.setString(7, toAccount);
       insert.setString(8, customerId);
       insert.executeUpdate();
+      AuditLog.success(
+          AuditLog.Event.TRANSACTION_RECORD,
+          customerId,
+          auditAccount(),
+          amount,
+          null,
+          transactionType + " #" + transactionNumber);
       return transactionNumber;
     } catch (SQLException e) {
       DBConnection.logSqlException(LOG, "recordTransaction", e);
+      AuditLog.failure(
+          AuditLog.Event.TRANSACTION_RECORD, customerId, auditAccount(), amount, "database error");
       return null;
     }
+  }
+
+  private String auditAccount() {
+    return fromAccount == null ? toAccount : fromAccount + "->" + toAccount;
   }
 
   /** Returns {@code uName}'s transactions between the start and end dates. */

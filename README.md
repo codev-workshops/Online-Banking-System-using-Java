@@ -29,3 +29,5 @@ mvn -B package               # builds target/ROOT.war
 Passwords are stored as salted PBKDF2 hashes (`PasswordUtil`). Accounts created before that hold plaintext passwords, which no longer verify: reset them or hash them with a one-off migration.
 
 Everything except the login and sign-up pages requires a logged-in session (`AuthFilter`). The customer is always taken from the session, and every POST must carry the session's `csrfToken`.
+
+Money movements (account opening, deposits, withdrawals, recorded transactions) are audited by `AuditLog`: one `key=value` line per attempt, including rejected ones with a `reason`, written to `$CATALINA_BASE/logs/banking-audit.<date>.log` via `WEB-INF/classes/logging.properties`.
