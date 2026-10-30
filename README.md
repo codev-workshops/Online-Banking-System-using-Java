@@ -12,3 +12,16 @@ Develop use cases of Account Overview, Inquire Transactions, Deposit, and Withdr
 1.	Develop methods deposit(), withdraw() in your classes CheckingAccount and SavingsAccount, getBalance() and calculateInterests() in class SavingsAccount,  searchTransaction() in class Transactions. Then implement Transfer, Deposit, and Withdraw functionalities. It means that your program shows Transfer, Deposit, or Withdraw after successful login. Your current program is to show Open Bank Account window after successful login. Modifications are necessary. 
 2.	Organize these functionalities as tabs in one window. The default tab is Account Overview. Please combine Open Account into this application.  Show the window after successful login. These tabs must be in your window, Account Overview, Open Account, Deposit, Withdraw, Transfer and Inquire Transactions subtabs.
  
+
+## Running locally
+
+Requires Java 17, Maven, Docker, and Tomcat 9 (javax.servlet; Tomcat 10+ will not work).
+
+```bash
+./scripts/start-db.sh        # SQL Server 2022 in Docker + db/schema.sql
+mvn -B package               # builds target/ROOT.war
+./scripts/run-app.sh         # deploys to $CATALINA_HOME (default ~/tools/apache-tomcat-9), http://localhost:8080
+./scripts/smoke-test.sh      # sign-up / login smoke test against the running app
+```
+
+`DBConnection` reads the JDBC URL from `DB_URL`; when unset it falls back to the original integrated-security URL.

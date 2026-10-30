@@ -46,7 +46,7 @@ public class LoginServlet extends HttpServlet {
       Password = req.getParameter( "PassWord" );
       Account Acct = new Account(Username, Password);
       String CustomerName = Acct.signIn();
-      if (!CustomerName.equals("")){
+      if (CustomerName != null && !CustomerName.equals("")){
 		  System.out.println("login username=" + Username);
           //showSuccess();
           req.setAttribute("Username", Username);

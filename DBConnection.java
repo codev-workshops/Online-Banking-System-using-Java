@@ -15,7 +15,9 @@ public class DBConnection {
 
     public DBConnection() {
         //URL = "jdbc:odbc:JavaClass";
-        URL ="jdbc:sqlserver://127.0.0.1:1433;databaseName=JavaClass;integratedSecurity=true;";//"user=tang;password=;
+        URL = System.getenv("DB_URL");
+        if (URL == null || URL.isEmpty())
+            URL ="jdbc:sqlserver://127.0.0.1:1433;databaseName=JavaClass;integratedSecurity=true;";//"user=tang;password=;
         connection = null;
 
     }
