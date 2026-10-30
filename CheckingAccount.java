@@ -1,255 +1,171 @@
 /******************************************************************************
-*	Program Author: Dr. Yongming Tang for CSCI 6810 Java and the Internet	  *
-*	Date: October, 2013													      *
-*******************************************************************************/
+ *	Program Author: Dr. Yongming Tang for CSCI 6810 Java and the Internet	  *
+ *	Date: October, 2013													      *
+ *******************************************************************************/
 package com.mishra;
 
-import java.lang.*; //including Java packages used by this program
-import java.sql.*;
-import com.mishra.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.logging.Logger;
 
-public class CheckingAccount
-{   //Instance Variables
-	private String CheckingAccountNumber, CustomerName, CustomerID;
-	private float Balance = -1, Amount = -1;
+/** A customer's checking account. */
+public class CheckingAccount {
+  private static final Logger LOG = Logger.getLogger(CheckingAccount.class.getName());
 
-		public CheckingAccount(String CA_Num, String Cust_Name, String Cust_ID, String Amt) { //Constructor One with three parameters
-		CheckingAccountNumber = CA_Num;
-		CustomerName = Cust_Name;
-		CustomerID = Cust_ID;
-		//Balance = Float.parseFloat(Bal);
-		Amount = Float.parseFloat(Amt);
-	}
+  private String checkingAccountNumber;
+  private String customerName;
+  private String customerId;
+  private float balance = -1;
+  private float amount = -1;
 
+  /** Creates an account with an opening or transaction amount. */
+  public CheckingAccount(String caNum, String custName, String custId, String amt) {
+    checkingAccountNumber = caNum;
+    customerName = custName;
+    customerId = custId;
+    amount = Float.parseFloat(amt);
+  }
 
+  /** Creates a handle to an existing account. */
+  public CheckingAccount(String caNum) {
+    checkingAccountNumber = caNum;
+  }
 
-	public CheckingAccount(String CA_Num) { //Constructor Two with one parameter
-		CheckingAccountNumber = CA_Num;
-	}
-	public CheckingAccount() { //Constructor with no parameters for fetching the account no.
-		}
+  /** Creates an empty handle for looking up account numbers. */
+  public CheckingAccount() {}
 
+  /** Opens the account if its number is not taken yet. */
+  public boolean openAcct() {
+    try (Connection conn = new DBConnection().requireConn();
+        PreparedStatement find =
+            conn.prepareStatement(
+                "SELECT CheckingAccountNumber FROM CheckingAccount WHERE CheckingAccountNumber"
+                    + " = ?")) {
+      find.setString(1, checkingAccountNumber);
+      try (ResultSet rslt = find.executeQuery()) {
+        if (rslt.next()) {
+          return false;
+        }
+      }
+      try (PreparedStatement insert =
+          conn.prepareStatement(
+              "INSERT INTO CheckingAccount(CheckingAccountNumber, CustomerName, Balance,"
+                  + " CustomerID) VALUES (?, ?, ?, ?)")) {
+        insert.setString(1, checkingAccountNumber);
+        insert.setString(2, customerName);
+        insert.setFloat(3, amount);
+        insert.setString(4, customerId);
+        return insert.executeUpdate() == 1;
+      }
+    } catch (SQLException e) {
+      DBConnection.logSqlException(LOG, "openAcct", e);
+      return false;
+    }
+  }
 
-    public boolean openAcct() {
-	     boolean done = false;
-				try {
-				    if (!done) {
-				        DBConnection ToDB = new DBConnection(); //Have a connection to the DB
-				        Connection DBConn = ToDB.openConn();
-				        Statement Stmt = DBConn.createStatement();
-				        String SQL_Command = "SELECT CheckingAccountNumber FROM CheckingAccount WHERE CheckingAccountNumber ='"+CheckingAccountNumber+"'"; //SQL query command
-				        ResultSet Rslt = Stmt.executeQuery(SQL_Command); //Inquire if the username exsits.
-				        done = !Rslt.next();
-				        if (done) {
-						    SQL_Command = "INSERT INTO CheckingAccount(CheckingAccountNumber, CustomerName, Balance, CustomerID)"+
-						                  " VALUES ('"+CheckingAccountNumber+"','"+CustomerName+"',"+Amount+", '"+CustomerID+"')"; //Save the username, password and Name
-						    Stmt.executeUpdate(SQL_Command);
-					    }
-					    Stmt.close();
-					    ToDB.closeConn();
-					}
-				}
-			    catch(java.sql.SQLException e)
-			    {         done = false;
-						 System.out.println("SQLException: " + e);
-						 while (e != null)
-						 {   System.out.println("SQLState: " + e.getSQLState());
-							 System.out.println("Message: " + e.getMessage());
-							 System.out.println("Vendor: " + e.getErrorCode());
-							 e = e.getNextException();
-							 System.out.println("");
-						 }
-			    }
-			    catch (java.lang.Exception e)
-			    {         done = false;
-						 System.out.println("Exception: " + e);
-						 e.printStackTrace ();
-			    }
-	    return done;
-	}
-	public String getAccno(String C_ID) {  //Method to return a CheckingAccount No.
-			try {
-			        DBConnection ToDB = new DBConnection(); //Have a connection to the DB
-			        Connection DBConn = ToDB.openConn();
-			        Statement Stmt = DBConn.createStatement();
-			        String SQL_Command = "SELECT CheckingAccountNumber FROM CheckingAccount WHERE CustomerID ='"+C_ID+"'";
-			        ResultSet Rslt = Stmt.executeQuery(SQL_Command);
+  /** Returns the account number owned by customer {@code cId}, or {@code null}. */
+  public String getAccno(String cId) {
+    try (Connection conn = new DBConnection().requireConn();
+        PreparedStatement stmt =
+            conn.prepareStatement(
+                "SELECT CheckingAccountNumber FROM CheckingAccount WHERE CustomerID = ?")) {
+      stmt.setString(1, cId);
+      try (ResultSet rslt = stmt.executeQuery()) {
+        while (rslt.next()) {
+          checkingAccountNumber = rslt.getString("CheckingAccountNumber");
+        }
+      }
+    } catch (SQLException e) {
+      DBConnection.logSqlException(LOG, "getAccno", e);
+    }
+    return checkingAccountNumber;
+  }
 
-			        while (Rslt.next()) {
-					CheckingAccountNumber = Rslt.getString("CheckingAccountNumber");
+  /** Returns this account's balance. */
+  public float getBalance() {
+    return getBalance(checkingAccountNumber);
+  }
 
-				    }
-				    Stmt.close();
-				    ToDB.closeConn();
-			}
-		    catch(java.sql.SQLException e)
-		    {
-					 System.out.println("SQLException: " + e);
-					 while (e != null)
-					 {   System.out.println("SQLState: " + e.getSQLState());
-						 System.out.println("Message: " + e.getMessage());
-						 System.out.println("Vendor: " + e.getErrorCode());
-						 e = e.getNextException();
-						 System.out.println("");
-					 }
-		    }
-		    return CheckingAccountNumber;
-	}
-    public float getBalance() {  //Method to return a CheckingAccount balance
-		try {
-		        DBConnection ToDB = new DBConnection(); //Have a connection to the DB
-		        Connection DBConn = ToDB.openConn();
-		        Statement Stmt = DBConn.createStatement();
-		        String SQL_Command = "SELECT Balance FROM CheckingAccount WHERE CheckingAccountNumber ='"+CheckingAccountNumber+"'"; //SQL query command for Balance
-		        ResultSet Rslt = Stmt.executeQuery(SQL_Command);
+  /** Returns the balance of account {@code acctNumber}. */
+  public float getBalance(String acctNumber) {
+    try (Connection conn = new DBConnection().requireConn();
+        PreparedStatement stmt =
+            conn.prepareStatement(
+                "SELECT Balance FROM CheckingAccount WHERE CheckingAccountNumber = ?")) {
+      stmt.setString(1, acctNumber);
+      try (ResultSet rslt = stmt.executeQuery()) {
+        while (rslt.next()) {
+          balance = rslt.getFloat(1);
+        }
+      }
+    } catch (SQLException e) {
+      DBConnection.logSqlException(LOG, "getBalance", e);
+    }
+    return balance;
+  }
 
-		        while (Rslt.next()) {
-					Balance = Rslt.getFloat(1);
-			    }
-			    Stmt.close();
-			    ToDB.closeConn();
-		}
-	    catch(java.sql.SQLException e)
-	    {
-				 System.out.println("SQLException: " + e);
-				 while (e != null)
-				 {   System.out.println("SQLState: " + e.getSQLState());
-					 System.out.println("Message: " + e.getMessage());
-					 System.out.println("Vendor: " + e.getErrorCode());
-					 e = e.getNextException();
-					 System.out.println("");
-				 }
-	    }
-	    catch (java.lang.Exception e)
-	    {
-				 System.out.println("Exception: " + e);
-				 e.printStackTrace ();
-	    }
-	    return Balance;
-	}
+  /** Adds the amount to this account if customer {@code cId} owns it. */
+  public boolean deposit(String cId) {
+    if (isBlank(checkingAccountNumber) || isBlank(customerId) || amount <= 0) {
+      return false;
+    }
+    Float current = ownedBalance(cId);
+    return current != null && updateBalance(cId, current + amount);
+  }
 
-    public float getBalance(String ChkAcctNumber) {  //Method to return a CheckingAccount balance
-		try {
-		        DBConnection ToDB = new DBConnection(); //Have a connection to the DB
-		        Connection DBConn = ToDB.openConn();
-		        Statement Stmt = DBConn.createStatement();
-		        String SQL_Command = "SELECT Balance FROM CheckingAccount WHERE CheckingAccountNumber ='"+ChkAcctNumber+"'"; //SQL query command for Balance
-		        ResultSet Rslt = Stmt.executeQuery(SQL_Command);
+  /** Takes the amount from this account if customer {@code cId} owns it and funds suffice. */
+  public boolean Withdraw(String cId) {
+    if (isBlank(checkingAccountNumber) || isBlank(customerId) || amount <= 0) {
+      return false;
+    }
+    Float current = ownedBalance(cId);
+    return current != null && current >= amount && updateBalance(cId, current - amount);
+  }
 
-		        while (Rslt.next()) {
-					Balance = Rslt.getFloat(1);
-			    }
-			    Stmt.close();
-			    ToDB.closeConn();
-		}
-	    catch(java.sql.SQLException e)
-	    {
-				 System.out.println("SQLException: " + e);
-				 while (e != null)
-				 {   System.out.println("SQLState: " + e.getSQLState());
-					 System.out.println("Message: " + e.getMessage());
-					 System.out.println("Vendor: " + e.getErrorCode());
-					 e = e.getNextException();
-					 System.out.println("");
-				 }
-	    }
-	    catch (java.lang.Exception e)
-	    {
-				 System.out.println("Exception: " + e);
-				 e.printStackTrace ();
-	    }
-	    return Balance;
-	}
+  private Float ownedBalance(String cId) {
+    try (Connection conn = new DBConnection().requireConn();
+        PreparedStatement stmt =
+            conn.prepareStatement(
+                "SELECT Balance FROM CheckingAccount WHERE CheckingAccountNumber = ? AND CustomerID"
+                    + " = ?")) {
+      stmt.setString(1, checkingAccountNumber);
+      stmt.setString(2, cId);
+      try (ResultSet rslt = stmt.executeQuery()) {
+        if (!rslt.next()) {
+          return null;
+        }
+        balance = rslt.getFloat(1);
+        return balance;
+      }
+    } catch (SQLException e) {
+      DBConnection.logSqlException(LOG, "read balance", e);
+      return null;
+    }
+  }
 
-	public boolean deposit(String C_ID){
+  private boolean updateBalance(String cId, float newBalance) {
+    try (Connection conn = new DBConnection().requireConn();
+        PreparedStatement stmt =
+            conn.prepareStatement(
+                "UPDATE CheckingAccount SET Balance = ? WHERE CheckingAccountNumber = ? AND"
+                    + " CustomerID = ?")) {
+      stmt.setFloat(1, newBalance);
+      stmt.setString(2, checkingAccountNumber);
+      stmt.setString(3, cId);
+      if (stmt.executeUpdate() != 1) {
+        return false;
+      }
+      balance = newBalance;
+      return true;
+    } catch (SQLException e) {
+      DBConnection.logSqlException(LOG, "update balance", e);
+      return false;
+    }
+  }
 
-			boolean done= !CheckingAccountNumber.equals("") && !CustomerID.equals("");
-
-			try{
-				if(done){
-					DBConnection DBconn = new DBConnection();
-					Connection conn = DBconn.openConn();
-					Statement stat = conn.createStatement();
-					String SQL_Command = "SELECT Balance FROM CheckingAccount WHERE CheckingAccountNumber = '"+CheckingAccountNumber+"' AND CustomerID ='"+C_ID+"'";
-					System.out.println(SQL_Command);
-					ResultSet reslt = stat.executeQuery(SQL_Command);
-
-					while (reslt.next()) {
-						 Balance = reslt.getFloat(1);
-						}
-					Balance = Balance + Amount;
-					SQL_Command = "UPDATE CheckingAccount SET Balance = '" + Balance + "' WHERE CheckingAccountNumber = '"+CheckingAccountNumber+"'";
-					System.out.println(SQL_Command);
-					stat.executeUpdate(SQL_Command);
-					stat.close();
-					DBconn.closeConn();
-					}
-				}
-
-			catch (SQLException e){
-				System.out.println("SQLException" + e);
-				done= false;
-				System.out.println("SQLExceptionState" + e.getSQLState());
-				System.out.println("message" + e.getMessage());
-				System.out.println("vendor" + e.getErrorCode());
-				e.getNextException();
-				System.out.println("");
-			}
-
-			catch (java.lang.Exception e){
-
-				System.out.println("Exception" + e);
-				e.printStackTrace();
-			}
-
-			return done;
-	}
-	public boolean Withdraw(String C_ID){
-
-			boolean done = !CheckingAccountNumber.equals("") && !CustomerID.equals("");
-
-			try{
-				if(done){
-					DBConnection DBconn = new DBConnection();
-					Connection Conn = DBconn.openConn();
-					Statement Stat = Conn.createStatement();
-					String SQL_Command = "SELECT Balance FROM CheckingAccount WHERE CheckingAccountNumber = '"+CheckingAccountNumber+"' AND CustomerID= '"+C_ID+"' ";
-					System.out.println(SQL_Command);
-					ResultSet rslt = Stat.executeQuery(SQL_Command);
-					while (rslt.next()) {
-						 Balance = rslt.getFloat(1);
-					}
-					if (Balance>=Amount) {
-						Balance = Balance - Amount;
-						SQL_Command = "UPDATE CheckingAccount SET Balance = '"+Balance+"' WHERE  CheckingAccountNumber = '"+CheckingAccountNumber+"'";
-						System.out.println(SQL_Command);
-						Stat.executeUpdate(SQL_Command);
-						Stat.close();
-						DBconn.closeConn();
-
-					}
-				}
-			}
-			catch (java.sql.SQLException e){
-
-				System.out.println("SQLException" + e);
-				while (e != null){
-					System.out.println("SqlExceptionState" + e.getSQLState());
-					System.out.println("Message"+ e.getMessage());
-					System.out.println("Vendor"+ e.getErrorCode());
-
-					e = e.getNextException();
-					System.out.println("");
-
-				}
-			}
-			catch (java.lang.Exception e){
-
-				System.out.println("Exception" + e);
-
-				e.printStackTrace();
-
-			}
-	       return done;
-	   }
+  private static boolean isBlank(String value) {
+    return value == null || value.isEmpty();
+  }
 }

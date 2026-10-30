@@ -1,70 +1,57 @@
 package com.mishra;
 
-import java.util.*;
-import java.sql.*;
-import com.mishra.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.util.Vector;
+import java.util.logging.Logger;
 
+/** Looks up a customer's transactions in a date range. */
 public class EnquireTransaction {
-	private String UName, StartDate, EndDate;
-	private Vector C_Names, Rows;
-	public Vector[] FetchTransaction(String Uname,String StartDate,String EndDate) {
-		boolean done = !StartDate.equals("") && !EndDate.equals("");
-		try {
-			Vector C_Names = new Vector();
-			Vector Rows = new Vector();
-			if (done)
-			{
-			  C_Names.addElement("Trans_Number");
-			  C_Names.addElement("Trans_Amount");
-			  C_Names.addElement("Trans_Time");
-			  C_Names.addElement("Trans_Date");
-			  C_Names.addElement("From_Acc");
-			  C_Names.addElement("To_Acc");
-			  C_Names.addElement("Trans_Type");
+  private static final Logger LOG = Logger.getLogger(EnquireTransaction.class.getName());
 
-			  DBConnection ToDB = new DBConnection();
-			  Connection DBConn = ToDB.openConn();
-			  Statement stmt = DBConn.createStatement();
-			  String SQL_Command = " SELECT * FROM Transactions WHERE CustomerID = '"+UName+"' AND TransactionDate BETWEEN '"+StartDate+"' AND '"+EndDate+"'";
-	          ResultSet rslt = stmt.executeQuery(SQL_Command);
-	          ResultSetMetaData rsmd = rslt.getMetaData();
-	          while(rslt.next())
-	          {
-				  DBConnection DC = new DBConnection();
-				  Rows.addElement(DC.getNextRow(rslt,rsmd));
-				  int CN = rsmd.getColumnCount();
-				  for (int i = 0; i<=CN; i++)
-				  {
-					  C_Names.addElement(rsmd.getColumnName(CN));
-				  }
-		  	  }
-		  	  stmt.close();
-		   	  ToDB.closeConn();
-			}
-		}
+  /**
+   * Returns {@code [columnNames, rows]} for {@code uname}'s transactions between the two dates
+   * ({@code yyyy-MM-dd}).
+   */
+  public Vector[] FetchTransaction(String uname, String startDate, String endDate) {
+    Vector columnNames = new Vector();
+    Vector rows = new Vector();
+    if (uname != null
+        && startDate != null
+        && endDate != null
+        && !startDate.isEmpty()
+        && !endDate.isEmpty()) {
+      columnNames.addElement("Trans_Number");
+      columnNames.addElement("Trans_Amount");
+      columnNames.addElement("Trans_Time");
+      columnNames.addElement("Trans_Date");
+      columnNames.addElement("From_Acc");
+      columnNames.addElement("To_Acc");
+      columnNames.addElement("Trans_Type");
 
-	 	 	catch(java.sql.SQLException e)
-		 	{done = false;
-		 	 System.out.println("SQLException: " + e);
-		 	 while (e != null)
-		 	 {System.out.println("SQLState: " + e.getSQLState());
-		 		System.out.println("Message: " + e.getMessage());
-		 		System.out.println("Vendor: " + e.getErrorCode());
-		 		e = e.getNextException();
-		 		System.out.println("");
-		 	 }
-		   	}
-		 	catch (java.lang.Exception e)
-		 	{done = false;
-		 	 System.out.println("Exception: " + e);
-		 	 e.printStackTrace ();
-			}
-		Vector[] TransInfo = new Vector[2];
-		TransInfo[0] = C_Names;
-		TransInfo[1] = Rows;
-		return TransInfo;
+      DBConnection db = new DBConnection();
+      try (Connection conn = db.requireConn();
+          PreparedStatement stmt =
+              conn.prepareStatement(
+                  "SELECT TransactionNumber, TransactionAmount, TransactionTime, TransactionDate,"
+                      + " FromAccount, ToAccount, TransactionType FROM Transactions"
+                      + " WHERE CustomerID = ? AND TransactionDate BETWEEN ? AND ?")) {
+        stmt.setString(1, uname);
+        stmt.setString(2, startDate);
+        stmt.setString(3, endDate);
+        try (ResultSet rslt = stmt.executeQuery()) {
+          ResultSetMetaData rsmd = rslt.getMetaData();
+          while (rslt.next()) {
+            rows.addElement(db.getNextRow(rslt, rsmd));
+          }
+        }
+      } catch (SQLException e) {
+        DBConnection.logSqlException(LOG, "FetchTransaction", e);
+      }
+    }
+    return new Vector[] {columnNames, rows};
+  }
 }
-}
-
-
-

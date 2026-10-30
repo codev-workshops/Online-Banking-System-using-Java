@@ -24,4 +24,8 @@ mvn -B package               # builds target/ROOT.war
 ./scripts/smoke-test.sh      # sign-up / login smoke test against the running app
 ```
 
-`DBConnection` reads the JDBC URL from `DB_URL`; when unset it falls back to the original integrated-security URL.
+`DBConnection` reads `DB_URL` (a JDBC URL without credentials), `DB_USER` and `DB_PASSWORD` from environment variables or system properties; without `DB_URL` it falls back to the original integrated-security URL. The scripts use `MSSQL_SA_PASSWORD` if set, otherwise a random password generated once into the git-ignored `.dev-db-password`.
+
+Passwords are stored as salted PBKDF2 hashes (`PasswordUtil`). Accounts created before that hold plaintext passwords, which no longer verify: reset them or hash them with a one-off migration.
+
+Everything except the login and sign-up pages requires a logged-in session (`AuthFilter`). The customer is always taken from the session, and every POST must carry the session's `csrfToken`.

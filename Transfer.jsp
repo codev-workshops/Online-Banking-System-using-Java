@@ -8,7 +8,7 @@
 <HTML><HEAD></HEAD>
 <BODY>
     <FORM NAME="TransferForm" ACTION="/CSCI6810/Transfer.jsp" METHOD ="POST">
-        <INPUT TYPE='hidden' NAME='UserID' VALUE='<%=request.getParameter("UserID")%>'>
+        <INPUT TYPE='hidden' NAME='csrfToken' VALUE='<%= com.mishra.AuthFilter.csrfToken(session) %>'>
 
         <TABLE cellPadding=3 ALIGN='center'>
 

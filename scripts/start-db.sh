@@ -3,7 +3,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 NAME="${DB_CONTAINER:-banking-mssql}"
-SA_PASSWORD="${MSSQL_SA_PASSWORD:-Banking#Dev2024}"
+source scripts/dev-db-env.sh
+SA_PASSWORD="$MSSQL_SA_PASSWORD"
 SQLCMD=(/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$SA_PASSWORD" -b)
 
 if ! docker ps -a --format '{{.Names}}' | grep -qx "$NAME"; then

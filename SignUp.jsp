@@ -37,7 +37,7 @@
 		<TR bgcolor='#ECFAEB'>
 		<TD>USERNAME:</TD>
 		<TD>
-		<INPUT TYPE='text' NAME='UserName' Value='<%= Username %>' SIZE='15' focused>
+		<INPUT TYPE='text' NAME='UserName' Value='<%= Html.escape(Username) %>' SIZE='15' focused>
 		</TD>
 		</TR>
 		<TR bgcolor='#ECFAEB'>
